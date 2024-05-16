@@ -49,7 +49,7 @@ data:
     log_level=general,artwork,database,inotify,scanner,metadata,http,ssdp,tivo=warn
     root_container=M
     port=8200
-    friendly_name=Kubernetes
+    friendly_name=Muziekarchief
     serial=654321
     model_number=1
     inotify=yes
