@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app: minidlna
+  name: minidlna-data-disk
+  namespace: minidlna
+spec:
+  claimRef:
+    name: minidlna-data-claim
+    namespace: minidlna
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  hostPath:
+    path: /exports/minidlna
+  storageClassName: microk8s-hostpath
+---
+apiVersion: apps/v1
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  labels:
+    app: minidlna
+  name: minidlna-data-claim
+  namespace: minidlna
+spec:
+  volumeName: minidlna-data-disk
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minidlna-config-map
+  namespace: minidlna
+  labels:
+    app: minidlna
+data:
+  minidlna.conf: |
+    media_dir=A,/opt/media
+    db_dir=/opt/db
+    log_dir=/opt/log
+    log_level=general,artwork,database,inotify,scanner,metadata,http,ssdp,tivo=warn
+    root_container=M
+    port=8200
+    friendly_name=Kubernetes
+    serial=654321
+    model_number=1
+    inotify=yes
+    album_art_names=Cover.jpg/cover.jpg/AlbumArtSmall.jpg/albumartsmall.jpg
+    album_art_names=AlbumArt.jpg/albumart.jpg/Album.jpg/album.jpg
+    album_art_names=Folder.jpg/folder.jpg/Thumb.jpg/thumb.jpg
+    album_art_names=Folder.jpeg/folder.jpeg/Thumb.jpeg/thumb.jpeg
+    user=minidlna
+    group=minidlna
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: minidlna
+  name: minidlna
+  namespace: minidlna
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minidlna
+  template:
+    metadata:
+      labels:
+        app: minidlna
+    spec:
+      restartPolicy: Always
+      hostNetwork: true
+      volumes:
+        - name: minidlna-data
+          persistentVolumeClaim:
+            claimName: minidlna-data-claim
+        - name: minidlna-config
+          configMap:
+            name: minidlna-config-map
+      containers:
+      - image: ghcr.io/kdeenkhoorn/minidlna:latest
+        name: minidlna
+        volumeMounts:
+        - name: minidlna-data
+          mountPath: /opt
+        - name: minidlna-config
+          mountPath: /etc/minidlna.conf
+          subPath: minidlna.conf
+          readOnly: true
+        ports:
+        - name: upnp-port
+          containerPort: 1900
+          protocol: UDP
+        - name: http-port
+          containerPort: 8200
+          protocol: TCP

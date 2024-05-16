@@ -10,4 +10,5 @@ RUN apk --no-cache add bash curl minidlna=${MINIDLNA_VERSION} tini shadow su-exe
 USER minidlna
 
 # Entrypoint
-ENTRYPOINT ["/sbin/tini", "--", "/usr/sbin/minidlnad", "-d"]
+ENTRYPOINT ["/sbin/tini", "--", "/usr/sbin/minidlnad"]
+CMD ["-R", "-d"]
