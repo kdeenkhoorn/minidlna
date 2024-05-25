@@ -90,6 +90,7 @@ spec:
       containers:
       - image: ghcr.io/kdeenkhoorn/minidlna:latest
         name: minidlna
+        imagePullPolicy: Always
         volumeMounts:
         - name: minidlna-data
           mountPath: /opt
